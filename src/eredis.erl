@@ -13,8 +13,10 @@
 %% Specified in http://www.erlang.org/doc/man/gen_server.html#call-3
 -define(TIMEOUT, 5000).
 
--export([start_link/0, start_link/1, start_link/2, start_link/3, start_link/4,
-         start_link/5, start_link/6, stop/1, q/2, q/3, qp/2, qp/3, q_noreply/2]).
+-export([stop/1, q/2, q/3, qp/2, qp/3, q_noreply/2]).
+
+-export([start_link/1, start_link/3, start_link/4,
+        start_link/5, start_link/6, start_link/7]).
 
 %% Exported for testing
 -export([create_multibulk/1]).
@@ -30,42 +32,43 @@
 %% PUBLIC API
 %%
 
-start_link() ->
-    start_link("127.0.0.1", 6379, 0, "").
+%% start_link(PoolName) ->
+%%     start_link(PoolName, "127.0.0.1", 6379, 0, "").
 
-start_link(Host, Port) ->
-    start_link(Host, Port, 0, "").
+start_link(PoolName, Host, Port) ->
+    start_link(PoolName, Host, Port, 0, "").
 
-start_link(Host, Port, Database) ->
-    start_link(Host, Port, Database, "").
+start_link(PoolName, Host, Port, Database) ->
+    start_link(PoolName, Host, Port, Database, "").
 
-start_link(Host, Port, Database, Password) ->
-    start_link(Host, Port, Database, Password, 100).
+start_link(PoolName, Host, Port, Database, Password) ->
+    start_link(PoolName, Host, Port, Database, Password, 100).
 
-start_link(Host, Port, Database, Password, ReconnectSleep) ->
-    start_link(Host, Port, Database, Password, ReconnectSleep, ?TIMEOUT).
+start_link(PoolName, Host, Port, Database, Password, ReconnectSleep) ->
+    start_link(PoolName, Host, Port, Database, Password, ReconnectSleep, ?TIMEOUT).
 
-start_link(Host, Port, Database, Password, ReconnectSleep, ConnectTimeout)
-  when is_list(Host),
-       is_integer(Port),
-       is_integer(Database) orelse Database == undefined,
-       is_list(Password),
-       is_integer(ReconnectSleep) orelse ReconnectSleep =:= no_reconnect,
-       is_integer(ConnectTimeout) ->
+start_link(PoolName, Host, Port, Database, Password, ReconnectSleep, ConnectTimeout)
+    when is_list(Host),
+    is_integer(Port),
+    is_integer(Database) orelse Database == undefined,
+    is_list(Password),
+    is_integer(ReconnectSleep) orelse ReconnectSleep =:= no_reconnect,
+    is_integer(ConnectTimeout) ->
 
-    eredis_client:start_link(Host, Port, Database, Password,
-                             ReconnectSleep, ConnectTimeout).
+    eredis_client:start_link(PoolName, Host, Port, Database, Password,
+        ReconnectSleep, ConnectTimeout).
 
 %% @doc: Callback for starting from poolboy
 -spec start_link(server_args()) -> {ok, Pid::pid()} | {error, Reason::term()}.
 start_link(Args) ->
+    PoolName       = proplists:get_value(poolname, Args, redispool),
     Host           = proplists:get_value(host, Args, "127.0.0.1"),
     Port           = proplists:get_value(port, Args, 6379),
     Database       = proplists:get_value(database, Args, 0),
     Password       = proplists:get_value(password, Args, ""),
     ReconnectSleep = proplists:get_value(reconnect_sleep, Args, 100),
     ConnectTimeout = proplists:get_value(connect_timeout, Args, ?TIMEOUT),
-    start_link(Host, Port, Database, Password, ReconnectSleep, ConnectTimeout).
+    start_link(PoolName, Host, Port, Database, Password, ReconnectSleep, ConnectTimeout).
 
 stop(Client) ->
     eredis_client:stop(Client).
