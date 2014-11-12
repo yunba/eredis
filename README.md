@@ -19,25 +19,25 @@ copy and paste the following into a shell to try out Eredis:
     cd eredis
     ./rebar compile
     erl -pa ebin/
-    {ok, C} = eredis:start_link().
-    {ok, <<"OK">>} = eredis:q(C, ["SET", "foo", "bar"]).
-    {ok, <<"bar">>} = eredis:q(C, ["GET", "foo"]).
+    {ok, C} = eredis:start_link(testredispool, "127.0.0.1", 6379).
+    {ok, <<"OK">>} = eredis:q(testredispool, ["SET", "foo", "bar"]).
+    {ok, <<"bar">>} = eredis:q(testredispool, ["GET", "foo"]).
 
 MSET and MGET:
 
 ```erlang
 KeyValuePairs = ["key1", "value1", "key2", "value2", "key3", "value3"].
-{ok, <<"OK">>} = eredis:q(C, ["MSET" | KeyValuePairs]).
-{ok, Values} = eredis:q(C, ["MGET" | ["key1", "key2", "key3"]]).
+{ok, <<"OK">>} = eredis:q(testredispool, ["MSET" | KeyValuePairs]).
+{ok, Values} = eredis:q(testredispool, ["MGET" | ["key1", "key2", "key3"]]).
 ```
 
 Transactions:
 
 ```erlang
-{ok, <<"OK">>} = eredis:q(C, ["MULTI"]).
-{ok, <<"QUEUED">>} = eredis:q(C, ["SET", "foo", "bar"]).
-{ok, <<"QUEUED">>} = eredis:q(C, ["SET", "bar", "baz"]).
-{ok, [<<"OK">>, <<"OK">>]} = eredis:q(C, ["EXEC"]).
+{ok, <<"OK">>} = eredis:q(testredispool, ["MULTI"]).
+{ok, <<"QUEUED">>} = eredis:q(testredispool, ["SET", "foo", "bar"]).
+{ok, <<"QUEUED">>} = eredis:q(testredispool, ["SET", "bar", "baz"]).
+{ok, [<<"OK">>, <<"OK">>]} = eredis:q(testredispool, ["EXEC"]).
 ```
 
 Pipelining:
@@ -46,7 +46,7 @@ Pipelining:
 P1 = [["SET", a, "1"],
       ["LPUSH", b, "3"],
       ["LPUSH", b, "2"]].
-[{ok, <<"OK">>}, {ok, <<"1">>}, {ok, <<"2">>}] = eredis:qp(C, P1).
+[{ok, <<"OK">>}, {ok, <<"1">>}, {ok, <<"2">>}] = eredis:qp(testredispool, P1).
 ```
 
 Pubsub:
